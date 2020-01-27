@@ -1,10 +1,11 @@
 import React, { Component } from 'react'
 import { Button, Input } from '../Utils/Utils'
 import TokenService from '../../services/token-service'
+import AuthApiService from '../../services/auth-api-service'
 
 export default class LoginForm extends Component {
   static defaultProps = {
-    onLoginSuccess: () => {}
+    onLoginSuccess: () => { }
   }
 
   state = { error: null }
@@ -22,12 +23,33 @@ export default class LoginForm extends Component {
     this.props.onLoginSuccess()
   }
 
+  handleSubmitJwtAuth = e => {
+    e.preventDefault()
+    this.setState({ error: null })
+    const { user_name, password } = e.target
+
+    AuthApiService.postLogin({
+      user_name: user_name.value,
+      password: password.value,
+    })
+      .then(res => {
+        user_name.value = ''
+        password.value = ''
+        TokenService.saveAuthToken(res.authToken)
+        this.props.onLoginSuccess()
+      })
+      .catch(err => {
+        this.setState({ error: err.error })
+      })
+
+  }
+
   render() {
     const { error } = this.state
     return (
       <form
         className='LoginForm'
-        onSubmit={this.handleSubmitBasicAuth}
+        onSubmit={this.handleSubmitJwtAuth}
       >
         <div role='alert'>
           {error && <p className='red'>{error}</p>}
